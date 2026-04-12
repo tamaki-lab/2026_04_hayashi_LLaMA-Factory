@@ -1,0 +1,61 @@
+### Model（モデル設定）
+# 学習のベースとなるモデルの場所（HuggingFace上の名前またはローカルパス）
+model_name_or_path: Qwen/Qwen3-VL-4B-Instruct
+# カスタムコード（モデル独自の処理）の実行を許可する
+trust_remote_code: true
+
+### Method（学習手法）
+# 教師あり微調整（Supervised Fine-Tuning）を指定
+stage: sft
+# 学習を実行するフラグ
+do_train: true
+# 全パラメータを学習対象にする（finetuning_type: lora ならLoRA学習）
+finetuning_type: full
+
+### Dataset（データセット設定）
+# dataset_info.json で登録した名前を指定
+dataset: egocross_train
+# データセットファイルが置いてあるディレクトリ
+dataset_dir: ./data
+# モデルに合わせた対話テンプレート（Qwen3-VL用）
+template: qwen3_vl
+# 1データあたりの最大トークン数（長い会話をどこで切るか）
+cutoff_len: 32768
+# データ前処理に使用するCPUスレッド数
+preprocessing_num_workers: 16
+
+### Image/Video Processing（画像・動画処理設定）
+# 画像1枚あたりの最大ピクセル数（メモリ節約のため解像度を制限）
+image_max_pixels: 65536
+# 動画1つあたりの最大ピクセル数
+video_max_pixels: 65536
+# 画像の最低ピクセル数
+image_min_pixels: 3136
+
+### Training Hyperparameters（学習ハイパーパラメータ）
+# GPU1枚あたりのバッチサイズ（1回に処理するデータの数）
+per_device_train_batch_size: 1
+# 勾配の蓄積歩数（実質的なバッチサイズを増やすために使用）
+gradient_accumulation_steps: 8
+# 学習率（モデルが知識を吸収するスピード。フルSFTなので低めに設定）
+learning_rate: 1.0e-5
+# データセット全体を何周学習するか
+num_train_epochs: 2
+# 学習率の減衰スケジュール（後半に向けて学習率を下げる設定）
+lr_scheduler_type: cosine
+# 最初の数ステップでゆっくり学習率を上げる割合（学習の安定化）
+warmup_ratio: 0.1
+# 16bit浮動小数点数（bfloat16）を使用して高速化と省メモリ化
+bf16: true
+
+### Output（出力設定）
+# 学習後のモデルやログを保存するフォルダ
+output_dir: ./output/egocross_full_sft
+# 何ステップごとにログ（Lossなど）を表示するか
+logging_steps: 10
+# 何ステップごとにモデルを保存するか
+save_steps: 500
+
+### DeepSpeed（巨大モデル学習用の並列処理設定）
+# フルSFTはメモリ消費が激しいため、DeepSpeed（Stage 2）を使用してVRAMを節約
+deepspeed: examples/deepspeed/ds_z2_config.json

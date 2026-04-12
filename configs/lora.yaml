@@ -1,0 +1,65 @@
+### Model（モデル設定）
+# 学習のベースとなるモデル（Qwen3-VL 4B版）
+model_name_or_path: Qwen/Qwen3-VL-4B-Instruct
+# モデル独自のスクリプト実行を許可
+trust_remote_code: true
+
+### Method（学習手法の設定）
+# 教師あり微調整（SFT）ステージを選択
+stage: sft
+# 学習を実行する
+do_train: true
+# 軽量学習手法「LoRA」を採用（VRAM消費を大幅に抑える）
+finetuning_type: lora
+
+### LoRA Config（LoRA固有の詳細設定）
+# LoRAの行列のランク（値が大きいほど表現力が増すが、メモリ消費も増える）
+lora_rank: 64
+# LoRAの係数（学習の強さに影響。通常はrankの2倍程度に設定）
+lora_alpha: 128
+# 学習中の過学習を防ぐためのドロップアウト率
+lora_dropout: 0.05
+# モデル内のすべての層（all）にLoRAを適用し、学習効率を最大化する
+lora_target: all
+
+### Dataset（データセット設定）
+# 読み込むデータセット名
+dataset: egocross_train
+# データの保存場所
+dataset_dir: ./data
+# 推論プロセスを省く「思考なし」テンプレートを指定（あなたのデータに最適化）
+template: qwen3_vl_nothink
+# 1データあたりの最大トークン数（長い入力を許容）
+cutoff_len: 32768
+
+### Image/Video Processing（画像・動画の処理設定）
+# 画像1枚あたりの最大画素数（10枚処理するために低めに制限）
+image_max_pixels: 65536
+# 動画の最大画素数
+video_max_pixels: 65536
+# 画像の最小画素数（低解像度入力も許容）
+image_min_pixels: 3136
+
+### Training Hyperparameters（学習の数値設定）
+# 1回にGPUへ投入するデータ数（メモリ節約のため最小の 1）
+per_device_train_batch_size: 1
+# 8回分の計算結果をまとめてから重みを更新（実質バッチサイズ = 8）
+gradient_accumulation_steps: 8
+# 学習率（LoRAはフル学習より高めの数値にするのが一般的）
+learning_rate: 2.0e-4
+# 全データを2回学習する
+num_train_epochs: 2
+# 学習率を後半にかけて滑らかに下げる設定
+lr_scheduler_type: cosine
+# 最初の10%のステップで学習率を徐々に上げて安定させる
+warmup_ratio: 0.1
+# 高性能な浮動小数点形式（bfloat16）で計算
+bf16: true
+
+### Output（保存先の設定）
+# 学習結果（LoRAアダプタ）の保存先
+output_dir: ./output/egocross_lora_final_test
+# 10ステップごとに進捗ログを表示
+logging_steps: 10
+# 500ステップごとにバックアップ（チェックポイント）を保存
+save_steps: 500
