@@ -185,3 +185,5 @@ predictions_score.json
 data/*
 .qwen/*
 =4.57.0
+
+submissions/*
