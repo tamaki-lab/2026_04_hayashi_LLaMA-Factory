@@ -327,3 +327,7 @@ def _ray_training_function(ray_args: "RayArguments", config: dict[str, Any]) -> 
 
     ray.get([worker._training_function.remote(config=config) for worker in workers])
     ray.shutdown()
+
+
+if __name__ == "__main__":
+    run_exp()
