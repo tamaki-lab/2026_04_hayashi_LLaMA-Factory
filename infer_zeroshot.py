@@ -17,6 +17,8 @@ from modelscope import AutoProcessor, Qwen3VLForConditionalGeneration    # pylin
 from PIL import Image  # 画像ファイルの読み込み・リサイズなどの処理
 from tqdm import tqdm  # ループの進捗状況をプログレスバーで表示
 
+import math
+
 # 以下、プログラムの各主要構成要素（モジュール）ごとの処理が記述されます。
 # 1. argparseによる実行時引数の設定
 # 2. Qwen3-VLモデルおよびプロセッサのロード
@@ -39,6 +41,7 @@ def parse_args():
     # モデルパスの設定: 推論に使用するマージ済みLoRAモデル等の格納場所を指定
     parser.add_argument("--model_path", type=str, default="./output/egocross_lora_merged_final_test",
                         help="学習済みモデルのディレクトリパス")
+    parser.add_argument("--gpu_id", type=str, default="3", help="使用するGPUのID")
     # コマンドラインから渡された引数を解析し、名前空間オブジェクトとして返す
     return parser.parse_args()
 
@@ -52,7 +55,7 @@ ARGS = parse_args()
 
 # 使用するGPUの制御: システム上の特定のGPU（インデックス2）のみを使用するように制限します。
 # 複数GPUがある環境で特定のカードを占有したい場合に有効な設定です。
-os.environ["CUDA_VISIBLE_DEVICES"] = "2"
+os.environ["CUDA_VISIBLE_DEVICES"] = ARGS.gpu_id
 
 # PyTorchのメモリ管理最適化: 'expandable_segments'を有効にすることで、
 # メモリの確保と解放による断片化を防ぎ、VRAM不足（OOM）のリスクを軽減します。
@@ -217,6 +220,10 @@ def main():
     # 実験手法の名前（ファイル名や管理用に使用）
     method_name = "zeroshot"
 
+    # --- 解像度の計算 ---
+    # max_pixels から 1辺の解像度を計算（例: 50176 -> 224）
+    resolution = int(math.sqrt(ARGS.max_pixels))
+
     # 2. 出力準備（保存先ディレクトリとファイル名の決定）
     # 結果を保存するためのフォルダパスを作成
     output_dir = os.path.join("submissions", "zeroshot")
@@ -225,8 +232,7 @@ def main():
     # 実行時の日時を取得（例: 20260422_1700）。上書きを防ぎ、実験履歴を管理しやすくします。
     timestamp = datetime.now().strftime("%Y%m%d_%H%M")
     # 最終的な保存先のフルパス（例: submissions/zeroshot/20260422_1700_zeroshot.json）
-    output_path = os.path.join(output_dir, f"{timestamp}_{method_name}.json")
-
+    output_path = os.path.join(output_dir, f"{timestamp}_{method_name}_r{resolution}.json")
     # 3. JSONデータのロード
     # テストデータを読み込み、Pythonのリスト/辞書形式に変換
     with open(testbed_path, "r", encoding="utf-8") as file:
