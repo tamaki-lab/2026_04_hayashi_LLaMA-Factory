@@ -45,33 +45,43 @@ FULL_NAMES = {
     "nip": "Next Interaction Prediction"
 }
 
+
 def clean_question_text(text):
-    if not text: return ""
+    if not text:
+        return ""
     text = text.strip()
     cleaned = re.split(r'\n?\s*[A-D][\.\)\:\s]', text)[0]
     return cleaned.strip()
 
+
 def get_domain_from_item(item):
-    if "domain" in item: return item["domain"]
+    if "domain" in item:
+        return item["domain"]
     paths = item.get("video_path") or item.get("images")
-    if not paths: return "unknown"
+    if not paths:
+        return "unknown"
     p = paths[0]
     mapping = {"EgoPet": "animal", "ENIGMA": "industry", "Extrame": "xsports"}
     for k, v in mapping.items():
-        if k in p: return v
+        if k in p:
+            return v
     return "surgery" if any(x in p for x in ["EgoSurgery", "Cholec"]) else "unknown"
+
 
 def get_subtask_group(item):
     paths = item.get("video_path") or item.get("images")
-    if not paths: return "unknown"
+    if not paths:
+        return "unknown"
     path_str = paths[0]
     match = re.search(r'/([a-z]+)_q\d+/', path_str)
-    if not match: return "unknown"
+    if not match:
+        return "unknown"
     raw_key = match.group(1).lower()
     for test_key, support_keys in TASK_CONSOLIDATION.items():
         if raw_key == test_key or raw_key in support_keys:
             return test_key
     return raw_key
+
 
 def analyze_with_counts(support_path, testbed_path):
     try:
@@ -79,8 +89,9 @@ def analyze_with_counts(support_path, testbed_path):
             support_data = json.load(f)
         with open(testbed_path, "r", encoding="utf-8") as f:
             testbed_data = json.load(f)
-    except Exception as e:
-        print(f"Error: {e}"); return
+    except Exception as e:  # pylint: disable=broad-except
+        print(f"Error: {e}")
+        return
 
     # [Domain][GroupKey][ds_type] = { "core_patterns": set(), "total_count": 0 }
     analysis = defaultdict(lambda: defaultdict(lambda: {
@@ -93,7 +104,7 @@ def analyze_with_counts(support_path, testbed_path):
             dom = get_domain_from_item(item)
             group_key = get_subtask_group(item)
             core_q = clean_question_text(item.get("question_text") or item.get("question", ""))
-            
+
             if core_q:
                 analysis[dom][group_key][ds_name]["patterns"].add(core_q)
                 analysis[dom][group_key][ds_name]["total"] += 1
@@ -108,14 +119,14 @@ def analyze_with_counts(support_path, testbed_path):
         for group_key in sorted(analysis[dom].keys()):
             data = analysis[dom][group_key]
             full_name = FULL_NAMES.get(group_key, group_key.upper())
-            
+
             print(f"\n  ● Sub-task Group: {full_name}")
-            
+
             for ds_type in ["Support", "Testbed"]:
                 patterns = sorted(list(data[ds_type]["patterns"]))
                 total_num = data[ds_type]["total"]
                 type_num = len(patterns)
-                
+
                 if total_num > 0:
                     # ご要望の形式: [DS Patterns: X types / Y questions]
                     print(f"    [{ds_type} Patterns: {type_num} types / {total_num} questions]")
@@ -124,6 +135,7 @@ def analyze_with_counts(support_path, testbed_path):
                 else:
                     print(f"    [{ds_type} Patterns: 0 types / 0 questions]")
             print("-" * 60)
+
 
 if __name__ == "__main__":
     SUPPORT_JSON = "support_db.json"
