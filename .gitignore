@@ -188,3 +188,5 @@ data/*
 .comet.config
 
 submissions/*
+
+support_eval_report.json
