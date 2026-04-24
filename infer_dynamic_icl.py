@@ -25,6 +25,7 @@ from retriever import SupportRetriever
 def parse_args():
     parser = argparse.ArgumentParser(description="Dynamic ICL Inference for EgoCross")
     parser.add_argument("--model_path", type=str, default="Qwen/Qwen3-VL-4B-Instruct", help="モデルのパス")
+    parser.add_argument("--min_pixels", type=int, default=3136, help="最小ピクセル数 (デフォルト: 3136)")
     parser.add_argument("--max_pixels", type=int, default=50176, help="最大総画素数 (例: 50176 は 224x224)")
     parser.add_argument("--num_shots", type=int, default=2, help="検索するお手本の数")
     parser.add_argument("--gpu_id", type=str, default="3", help="使用するGPUのID")
@@ -151,6 +152,7 @@ def infer_one(item: dict, support_items: list, target_res: int) -> str:
         text=[prompt],
         images=[imgs] if imgs else None,
         return_tensors="pt",
+        min_pixels=ARGS.min_pixels,
         max_pixels=ARGS.max_pixels
     ).to(main_device)
 
@@ -248,12 +250,6 @@ def main():
 
     with open(output_path, "w", encoding="utf-8") as f:
         json.dump(sub, f, indent=2)
-
-    # 最終精度の表示
-    print("\n--- Accuracy Report ---")
-    for d, s in stats.items():
-        if s["total"] > 0:
-            print(f"{d:12}: {s['correct']/s['total']*100:.2f}% ({s['correct']}/{s['total']})")
 
 
 if __name__ == "__main__":

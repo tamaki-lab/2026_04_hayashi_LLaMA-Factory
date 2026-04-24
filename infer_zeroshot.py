@@ -34,13 +34,13 @@ def parse_args():
     """
     # 引数解析器の初期化: プログラムの説明文を設定
     parser = argparse.ArgumentParser(description="Inference for EgoCross with adjustable pixel limits.")
+    # モデルパスの設定: 推論に使用するマージ済みLoRAモデル等の格納場所を指定
+    parser.add_argument("--model_path", type=str, default="./output/egocross_lora_merged_final_test",
+                        help="学習済みモデルのディレクトリパス")
     # 最小ピクセル数の設定: 画像をリサイズする際の下限値を指定
     parser.add_argument("--min_pixels", type=int, default=3136, help="最小ピクセル数 (デフォルト: 3136)")
     # 最大ピクセル数の設定: VRAM消費量に直結する重要なパラメータ。画像1枚あたりの解像度を制限
     parser.add_argument("--max_pixels", type=int, default=50176, help="最大ピクセル数 (デフォルト: 224x224相当)")
-    # モデルパスの設定: 推論に使用するマージ済みLoRAモデル等の格納場所を指定
-    parser.add_argument("--model_path", type=str, default="./output/egocross_lora_merged_final_test",
-                        help="学習済みモデルのディレクトリパス")
     parser.add_argument("--gpu_id", type=str, default="3", help="使用するGPUのID")
     # コマンドラインから渡された引数を解析し、名前空間オブジェクトとして返す
     return parser.parse_args()
